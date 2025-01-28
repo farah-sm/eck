@@ -10,13 +10,17 @@ Elastic Cloud on Kubernetes (ECK) simplifies the deployment and management of El
 
 ## Installation and Configuration
 
-### 1. Install the ECK Operator
+### 1. Install the ECK Operator & Fluent Bit agent(s)
 
 ```bash
-helm repo add elastic [https://helm.elastic.co](https://helm.elastic.co)
-helm repo update
+kubectl create ns observer
 
-helm install elastic-operator elastic/eck-operator -n obs-system --kubeconfig /path/to/your/kubeconfig  # Replace with your kubeconfig path
+helm repo add elastic https://helm.elastic.co
+helm repo add fluent https://fluent.github.io/helm-charts
+
+helm install elastic-operator elastic/eck-operator -n observer --kubeconfig /path/to/your/kubeconfig  # Replace with your kubeconfig path
+
+
 ```
 
 ### 2. Deploy Elasticsearch Cluster
@@ -69,7 +73,7 @@ kubectl apply -f kibana.yaml # Save the above YAML as kibana.yaml
 
 ## Data Ingestion
 
-### 4. Configure Fluent Bit for Audit Logs
+### 4. Configure Fluent Bit values file
 
 Populate the ConfigMap section of the Fluent Bit values file for Fluent Bit output configuration:
 
@@ -95,7 +99,10 @@ data:
 ```
 
 ```bash
-kubectl apply -f fluent-bit-config.yaml # Save the above YAML as fluent-bit-config.yaml
+helm install fluent-bit \
+  fluent/fluent-bit \
+  -f fluentbit-values.yaml \
+  -n observer # Save the above YAML as fluent-bit-config.yaml
 ```
 
 **Important:** Replace `<elasticsearch_service_ip>` with the actual ClusterIP or LoadBalancer IP of your Elasticsearch service.  Replace `<elasticsearch_password>` with the Elasticsearch `elastic` user's password.  **Do not hardcode passwords in ConfigMaps in production.**  See "Security Considerations" below.
